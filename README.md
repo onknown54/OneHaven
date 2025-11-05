@@ -6,6 +6,7 @@ A comprehensive Postman collection is available in the root directory for testin
 
 ## Project Structure
 
+```
 src/
 ├── config/          # Configuration files
 ├── controllers/     # Route controllers
@@ -14,6 +15,7 @@ src/
 ├── services/        # Business logic and event emitter
 ├── lib/             # Utilities and validators
 └── app.js           # Express app setup
+```
 
 ## Features
 
