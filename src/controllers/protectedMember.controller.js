@@ -40,7 +40,6 @@ export const getProtectedMembers = catchError(async (req, res) => {
     .eq("caregiver_id", req.caregiver.id);
 
   if (error) throw error;
-
   return response.success(members, "Protected members retrieved successfully");
 });
 
