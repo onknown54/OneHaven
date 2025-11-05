@@ -6,13 +6,12 @@ import {
   caregiverLoginSchema,
   caregiverSignupSchema,
 } from "../lib/validators/careGiver.js";
+import Response from "../lib/response.js";
 
 export const createCareGiver = catchError(async (req, res) => {
+  const response = new Response(res);
   const { error, value } = caregiverSignupSchema.validate(req.body);
-  if (error)
-    return res
-      .status(400)
-      .json({ status: "error", message: error.details[0].message });
+  if (error) return response.badRequest(error.details[0].message);
 
   const { name, email, passkey } = value;
   const { data: existingCaregiver } = await supabase
@@ -22,10 +21,7 @@ export const createCareGiver = catchError(async (req, res) => {
     .single();
 
   if (existingCaregiver)
-    return res.status(409).json({
-      status: "error",
-      message: "Caregiver with this email already exists",
-    });
+    return response.conflict("Caregiver with this email already exists");
 
   const hashedPasskey = await bcrypt.hash(passkey, 12);
   const { data: caregiver, error: insertError } = await supabase
@@ -48,25 +44,20 @@ export const createCareGiver = catchError(async (req, res) => {
     { expiresIn: "24h" }
   );
 
-  res.status(201).json({
-    status: "success",
-    message: "Caregiver created successfully",
-    caregiver: {
-      id: caregiver.id,
-      name: caregiver.name,
-      email: caregiver.email,
-      createdAt: caregiver.created_at,
-    },
-    token,
-  });
+  const caregiverData = {
+    id: caregiver.id,
+    name: caregiver.name,
+    email: caregiver.email,
+    createdAt: caregiver.created_at,
+  };
+
+  return response.created({ caregiver: caregiverData, token });
 });
 
 export const loginCareGiver = catchError(async (req, res) => {
+  const response = new Response(res);
   const { error, value } = caregiverLoginSchema.validate(req.body);
-  if (error)
-    return res
-      .status(400)
-      .json({ status: "error", message: error.details[0].message });
+  if (error) return response.badRequest(error.details[0].message);
 
   const { email, passkey } = value;
   const { data: caregiver, error: fetchError } = await supabase
@@ -76,16 +67,11 @@ export const loginCareGiver = catchError(async (req, res) => {
     .single();
 
   if (fetchError || !caregiver)
-    return res
-      .status(401)
-      .json({ status: "error", message: "Invalid credentials" });
+    return response.unauthorized("Invalid credentials");
 
   const isValidPasskey = await bcrypt.compare(passkey, caregiver.passkey);
 
-  if (!isValidPasskey)
-    return res
-      .status(401)
-      .json({ status: "error", message: "Invalid credentials" });
+  if (!isValidPasskey) return response.unauthorized("Invalid credentials");
 
   const token = jwt.sign(
     { caregiverId: caregiver.id, email: caregiver.email },
@@ -93,26 +79,26 @@ export const loginCareGiver = catchError(async (req, res) => {
     { expiresIn: "24h" }
   );
 
-  res.json({
-    status: "success",
-    message: "Login successful",
-    caregiver: {
-      id: caregiver.id,
-      name: caregiver.name,
-      email: caregiver.email,
-      createdAt: caregiver.created_at,
-    },
-    token,
-  });
+  const caregiverData = {
+    id: caregiver.id,
+    name: caregiver.name,
+    email: caregiver.email,
+    createdAt: caregiver.created_at,
+  };
+
+  return response.success(
+    { caregiver: caregiverData, token },
+    "Login successful"
+  );
 });
 
 export const getProfile = catchError(async (req, res) => {
-  res.json({
-    caregiver: {
-      id: req.caregiver.id,
-      name: req.caregiver.name,
-      email: req.caregiver.email,
-      createdAt: req.caregiver.created_at,
-    },
-  });
+  const response = new Response(res);
+  const caregiverData = {
+    id: req.caregiver.id,
+    name: req.caregiver.name,
+    email: req.caregiver.email,
+    createdAt: req.caregiver.created_at,
+  };
+  return response.success({ caregiver: caregiverData });
 });

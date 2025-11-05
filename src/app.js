@@ -6,6 +6,7 @@ import rateLimit from "express-rate-limit";
 import errorHandler from "./middlewares/errorHandler.middleware.js";
 import careGiverRoutes from "./routes/careGiver.route.js";
 import protectedMembersRoute from "./routes/protectedMember.route.js";
+import { healthCheck, notFound } from "./controllers/common.controller.js";
 
 const app = express();
 
@@ -20,17 +21,11 @@ app.use(limiter);
 app.use(morgan("combined"));
 app.use(express.json());
 
+app.get("/api/health", healthCheck);
 app.use("/api/caregivers", careGiverRoutes);
 app.use("/api/protected-members", protectedMembersRoute);
 
-app.get("/api/health", (req, res) => {
-  res.json({ status: "OK", timestamp: new Date().toISOString() });
-});
-
-app.use((req, res, next) => {
-  res.status(404).json({ error: "Not Found" });
-});
-
+app.use(notFound);
 app.use(errorHandler);
 
 export default app;

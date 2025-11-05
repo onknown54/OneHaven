@@ -3,10 +3,12 @@ import eventEmitter from "../services/eventEmitter.service.js";
 import { protectedMemberSchema } from "../lib/validators/protectedMember.js";
 import { protectedMemberUpdateSchema } from "../lib/validators/protectedMemberUpdate.js";
 import catchError from "../lib/catchError.js";
+import Response from "../lib/response.js";
 
 export const crateProtectedMember = catchError(async (req, res) => {
+  const response = new Response(res);
   const { error, value } = protectedMemberSchema.validate(req.body);
-  if (error) return res.status(400).json({ error: error.details[0].message });
+  if (error) return response.badRequest(error.details[0].message);
 
   const { data: member, error: insertError } = await supabase
     .from("protected_members")
@@ -27,14 +29,11 @@ export const crateProtectedMember = catchError(async (req, res) => {
     memberId: member.id,
   });
 
-  res.status(201).json({
-    status: "success",
-    message: "Protected member created successfully",
-    member,
-  });
+  return response.created(member, "Protected member created successfully");
 });
 
 export const getProtectedMembers = catchError(async (req, res) => {
+  const response = new Response(res);
   const { data: members, error } = await supabase
     .from("protected_members")
     .select("*")
@@ -42,16 +41,13 @@ export const getProtectedMembers = catchError(async (req, res) => {
 
   if (error) throw error;
 
-  res.json({
-    status: "success",
-    message: "Protected members retrieved successfully",
-    members,
-  });
+  return response.success(members, "Protected members retrieved successfully");
 });
 
 export const updateProtectedMember = catchError(async (req, res) => {
+  const response = new Response(res);
   const { error, value } = protectedMemberUpdateSchema.validate(req.body);
-  if (error) return res.status(400).json({ error: error.details[0].message });
+  if (error) return response.badRequest(error.details[0].message);
 
   const { data: existingMember } = await supabase
     .from("protected_members")
@@ -60,8 +56,7 @@ export const updateProtectedMember = catchError(async (req, res) => {
     .eq("caregiver_id", req.caregiver.id)
     .single();
 
-  if (!existingMember)
-    return res.status(404).json({ error: "Protected member not found" });
+  if (!existingMember) return response.notFound("Protected member not found");
 
   const { data: member, error: updateError } = await supabase
     .from("protected_members")
@@ -77,13 +72,11 @@ export const updateProtectedMember = catchError(async (req, res) => {
     memberId: member.id,
   });
 
-  res.json({
-    message: "Protected member updated successfully",
-    member,
-  });
+  return response.success(member, "Protected member updated successfully");
 });
 
 export const deleteProtectedMember = catchError(async (req, res) => {
+  const response = new Response(res);
   const { data: existingMember } = await supabase
     .from("protected_members")
     .select("id")
@@ -91,10 +84,7 @@ export const deleteProtectedMember = catchError(async (req, res) => {
     .eq("caregiver_id", req.caregiver.id)
     .single();
 
-  if (!existingMember)
-    return res
-      .status(404)
-      .json({ status: "error", message: "Protected member not found" });
+  if (!existingMember) return response.notFound("Protected member not found");
 
   const { error } = await supabase
     .from("protected_members")
@@ -108,8 +98,5 @@ export const deleteProtectedMember = catchError(async (req, res) => {
     memberId: req.params.id,
   });
 
-  res.json({
-    status: "success",
-    message: "Protected member deleted successfully",
-  });
+  return response.success({}, "Protected member deleted successfully");
 });
