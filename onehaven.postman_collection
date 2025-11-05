@@ -1,0 +1,468 @@
+{
+	"info": {
+		"_postman_id": "001c6b09-a94e-4ccf-baaf-cad157599550",
+		"name": "OneHaven",
+		"description": "Postman collection for testing OneHaven Backend Engineering Challenge endpoints",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "47866644"
+	},
+	"item": [
+		{
+			"name": "Caregiver",
+			"item": [
+				{
+					"name": "Caregiver Signup",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const response = pm.response.json();",
+									"    pm.collectionVariables.set('authToken', response.data.token);",
+									"    pm.collectionVariables.set('caregiverId', response.data.caregiver.id);",
+									"    console.log('Token set:', pm.collectionVariables.get('authToken'));",
+									"    pm.test('Signup successful', function () {",
+									"        pm.expect(response.data.token).to.be.a('string');",
+									"        pm.expect(response.data.caregiver.email).to.include('@');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"{{$randomFirstName}} {{$randomLastName}}\",\n  \"email\": \"lekanm715@example.com\",\n  \"passkey\": \"password123\"\n}"
+						},
+						"url": "{{baseUrl}}/caregivers/signup",
+						"description": "Create a new caregiver account"
+					},
+					"response": []
+				},
+				{
+					"name": "Caregiver Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    pm.collectionVariables.set('authToken', response.data.token);",
+									"    pm.collectionVariables.set('caregiverId', response.data.caregiver.id);",
+									"    pm.test('Login successful', function () {",
+									"        pm.expect(response.data.token).to.be.a('string');",
+									"        pm.expect(response.data.caregiver).to.have.property('id');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"lekanm715@example.com\",\n  \"passkey\": \"password123\"\n}"
+						},
+						"url": "{{baseUrl}}/caregivers/login",
+						"description": "Login with existing caregiver credentials"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Caregiver Profile",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Profile retrieved successfully', function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.data.caregiver).to.have.property('id');",
+									"    pm.expect(response.data.caregiver).to.have.property('email');",
+									"    pm.expect(response.data.caregiver).to.have.property('name');",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": {
+								"token": "{{authToken}}"
+							}
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
+						"url": "{{baseUrl}}/caregivers/me",
+						"description": "Get authenticated caregiver profile"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Protected Members",
+			"item": [
+				{
+					"name": "Create Protected Member",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const response = pm.response.json();",
+									"    pm.collectionVariables.set('memberId', response.data.id);",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": {
+								"token": "{{authToken}}"
+							}
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"first_name\": \"{{$randomFirstName}}\",\n  \"last_name\": \"{{$randomLastName}}\",\n  \"relationship\": \"Daughter\",\n  \"birth_year\": 2015,\n  \"status\": \"active\"\n}"
+						},
+						"url": "{{baseUrl}}/protected-members",
+						"description": "Create a new protected member"
+					},
+					"response": []
+				},
+				{
+					"name": "List Protected Members",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Members retrieved successfully', function () {",
+									"    pm.expect(pm.response.code).to.equal(200);",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.data).to.be.an('array');",
+									"",
+									"    if (response.data.length > 0) {",
+									"        pm.collectionVariables.set('memberId', response.data[0].id);",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": {
+								"token": "{{authToken}}"
+							}
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
+						"url": "{{baseUrl}}/protected-members",
+						"description": "Get all protected members for authenticated caregiver"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Protected Member",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Member updated successfully', function () {",
+									"    pm.expect(pm.response.code).to.equal(200);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": {
+								"token": "{{authToken}}"
+							}
+						},
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"first_name\": \"{{$randomFirstName}}\",\n  \"last_name\": \"{{$randomLastName}}\",\n  \"status\": \"inactive\"\n}"
+						},
+						"url": "{{baseUrl}}/protected-members/{{memberId}}",
+						"description": "Update an existing protected member"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Protected Member",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Member deleted successfully', function () {",
+									"    pm.expect(pm.response.code).to.equal(200);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": {
+								"token": "{{authToken}}"
+							}
+						},
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
+						"url": "{{baseUrl}}/protected-members/{{memberId}}",
+						"description": "Delete a protected member"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Error Scenarios",
+			"item": [
+				{
+					"name": "Signup with Existing Email",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Duplicate email error', function () {",
+									"    pm.expect(pm.response.code).to.equal(409);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"{{$randomFirstName}} {{$randomLastName}}\",\n  \"email\": \"lekanm715@example.com\",\n  \"passkey\": \"password123\"\n}"
+						},
+						"url": "{{baseUrl}}/caregivers/signup"
+					},
+					"response": []
+				},
+				{
+					"name": "Invalid Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Invalid credentials error', function () {",
+									"    pm.expect(pm.response.code).to.equal(401);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"nonexistent@example.com\",\n  \"passkey\": \"wrongpassword\"\n}"
+						},
+						"url": "{{baseUrl}}/caregivers/login"
+					},
+					"response": []
+				},
+				{
+					"name": "Access Protected Route Without Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Unauthorized access blocked', function () {",
+									"    pm.expect(pm.response.code).to.equal(401);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{baseUrl}}/caregivers/me"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Non-Existent Member",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Non-existent member error', function () {",
+									"    pm.expect(pm.response.code).to.equal(404);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"first_name\": \"Test\"\n}"
+						},
+						"url": "{{baseUrl}}/protected-members/non-existent-id"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Health Check",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "{{baseUrl}}/health"
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:3000/api",
+			"type": "string"
+		},
+		{
+			"key": "authToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "caregiverId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "memberId",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
