@@ -52,7 +52,7 @@ src/
   cd OneHaven
 ```
 
-1. Install dependencies
+2. Install dependencies
 
 ```bash
   npm install
